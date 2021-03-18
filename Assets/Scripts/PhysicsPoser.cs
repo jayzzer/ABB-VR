@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(XRController))]
+[RequireComponent(typeof(ActionBasedController))]
 public class PhysicsPoser : MonoBehaviour
 {
     #region PhysicValues
@@ -24,11 +24,9 @@ public class PhysicsPoser : MonoBehaviour
 
     #region References
 
-    public InputActionProperty positionAction;
-    public InputActionProperty rotationAction;
-    
     private Rigidbody _rigidbody;
     private XRBaseInteractor _interactor;
+    private ActionBasedController _controller;
 
     #endregion
 
@@ -43,6 +41,19 @@ public class PhysicsPoser : MonoBehaviour
     {
         _rigidbody = GetComponent<Rigidbody>();
         _interactor = GetComponent<XRBaseInteractor>();
+        _controller = GetComponent<ActionBasedController>();
+    }
+
+    private void OnEnable()
+    {
+        _interactor.onSelectEntered.AddListener(DisableHandColliders);
+        _interactor.onSelectExited.AddListener(EnableHandColliders);
+    }
+    
+    private void OnDisable()
+    {
+        _interactor.onSelectEntered.RemoveListener(DisableHandColliders);
+        _interactor.onSelectExited.RemoveListener(EnableHandColliders);
     }
 
     private void Start()
@@ -59,33 +70,34 @@ public class PhysicsPoser : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // if (IsHoldingObject() || !WithinPhysicsRange())
-        // {
-            Debug.Log("Moving using Transform");
+        if (IsHoldingObject() || !WithinPhysicsRange())
+        {
             MoveUsingTransform();
             RotateUsingTransform();
-            // }
-            Debug.Log("position " + transform.position);
-
+        }
+        else
+        {
+            MoveUsingPhysics();
+            RotateUsingPhysics();
+        }
     }
 
     private void UpdateTracking()
     {
-        _targetPos = positionAction.action.ReadValue<Vector3>();
-        _targetRot = rotationAction.action.ReadValue<Quaternion>();
+        _targetPos = _controller.positionAction.action.ReadValue<Vector3>();
+        _targetRot = _controller.rotationAction.action.ReadValue<Quaternion>();
     }
 
     private void MoveUsingTransform()
     {
         _rigidbody.velocity = Vector3.zero;
-        transform.position = _targetPos;
-        Debug.Log("targetPos " + _targetPos);
+        transform.localPosition = _targetPos;
     }
 
     private void RotateUsingTransform()
     {
         _rigidbody.angularVelocity = Vector3.zero;
-        transform.rotation = _targetRot;
+        transform.localRotation = _targetRot;
     }
 
     private void MoveUsingPhysics()
@@ -101,7 +113,8 @@ public class PhysicsPoser : MonoBehaviour
 
     private Vector3 FindNewVelocity()
     {
-        return (_targetPos - _rigidbody.position) / Time.deltaTime;
+        var worldPosition = transform.root.TransformPoint(_targetPos);
+        return (worldPosition - _rigidbody.position) / Time.deltaTime;
     }
 
     private void RotateUsingPhysics()
@@ -117,7 +130,8 @@ public class PhysicsPoser : MonoBehaviour
 
     private Vector3 FindNewAngularVelocity()
     {
-        var difference = _targetRot * Quaternion.Inverse(_rigidbody.rotation);
+        var worldRotation = transform.root.rotation * _targetRot;
+        var difference = worldRotation * Quaternion.Inverse(_rigidbody.rotation);
         difference.ToAngleAxis(out var angleInDegrees, out var rotationAxis);
 
         angleInDegrees = angleInDegrees > 180 ? angleInDegrees - 360 : angleInDegrees;
@@ -138,6 +152,30 @@ public class PhysicsPoser : MonoBehaviour
     private bool WithinPhysicsRange()
     {
         return Physics.CheckSphere(transform.position, physicsRange, physicsMask, QueryTriggerInteraction.Ignore);
+    }
+
+    private void DisableHandColliders(XRBaseInteractable interactable)
+    {
+        var handColliders = transform.GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>();
+        foreach (var handCollider in handColliders)
+        {
+            handCollider.enabled = false;
+        }
+    }
+
+    private void EnableHandColliders(XRBaseInteractable interactable)
+    {
+        StartCoroutine(WaitForRange());
+    }
+
+    private IEnumerator WaitForRange()
+    {
+        yield return new WaitWhile(WithinPhysicsRange);
+        var handColliders = transform.GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>();
+        foreach (var handCollider in handColliders)
+        {
+            handCollider.enabled = true;
+        }
     }
 
     private void OnDrawGizmos()

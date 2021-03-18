@@ -44,4 +44,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deviceCharacteristics: 512
-  handPrefab: {fileID: 109434732395284509, guid: 121c5997b5ac0994baa14bf1a3a31a9d, type: 3}
+  handPrefab: {fileID: 109434732395284509, guid: 77e381a976be851478dd0de92eb1ecef, type: 3}
