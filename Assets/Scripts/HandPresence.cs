@@ -5,12 +5,18 @@ using UnityEngine.XR;
 public class HandPresence : MonoBehaviour
 {
     public InputDeviceCharacteristics deviceCharacteristics;
-    public GameObject handPrefab;
 
     private InputDevice _targetDevice;
     private GameObject _spawnedHandModel;
     private Animator _handAnimator;
 
+    private void Awake()
+    {
+        _spawnedHandModel = transform.GetChild(0).gameObject;
+        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
+        _spawnedHandModel.SetActive(false);
+    }
+    
     private void Start()
     {
         TryInitializeHand();
@@ -23,8 +29,7 @@ public class HandPresence : MonoBehaviour
 
         if (devices.Count <= 0) return;
         _targetDevice = devices[0];
-        _spawnedHandModel = Instantiate(handPrefab, transform);
-        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
+        _spawnedHandModel.SetActive(true);
     }
 
     private void Update()
