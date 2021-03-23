@@ -1,28 +1,28 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(HandPoseController))]
+[CustomEditor(typeof(PhysicsHandAnimation))]
 public class ThumbPosingEditor : Editor
 {
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
 
-        var thumbPosing = (HandPoseController) target;
+        var handAnimation = (PhysicsHandAnimation) target;
 
         if (GUILayout.Button("Start squeeze"))
         {
-            thumbPosing.StartSqueeze();
+            handAnimation.StartSqueeze();
         }
 
         if (GUILayout.Button("Stop squeeze"))
         {
-            thumbPosing.StopSqueeze();
+            handAnimation.StopSqueeze();
         }
 
         if (GUILayout.Button("Reset hand"))
         {
-            thumbPosing.ResetHand();
+            handAnimation.ResetHand();
         }
     }
 }

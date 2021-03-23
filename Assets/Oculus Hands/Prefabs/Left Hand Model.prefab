@@ -255,7 +255,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   phalanges: []
-  squeezeSpeed: 100
+  squeezeSpeed: 5
 --- !u!1 &109434732395284493
 GameObject:
   m_ObjectHideFlags: 0
@@ -702,7 +702,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   phalanges: []
-  squeezeSpeed: 100
+  squeezeSpeed: 5
 --- !u!1 &109434732395284583
 GameObject:
   m_ObjectHideFlags: 0
@@ -873,7 +873,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   phalanges: []
-  squeezeSpeed: 100
+  squeezeSpeed: 5
 --- !u!1 &109434732395284591
 GameObject:
   m_ObjectHideFlags: 0
@@ -1204,7 +1204,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   phalanges: []
-  squeezeSpeed: 100
+  squeezeSpeed: 5
 --- !u!1 &109434732395284607
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,27 +1,28 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class HandPoseController : MonoBehaviour
+public class PhysicsHandAnimation : MonoBehaviour
 {
+    private Animator _handAnimator;
     private ThumbPosing[] _thumbPosings;
-    
+
     private void Awake()
     {
+        _handAnimator = GetComponentInChildren<Animator>();
         _thumbPosings = GetComponentsInChildren<ThumbPosing>();
     }
 
     public void StartSqueeze()
     {
+        _handAnimator.enabled = false;
         foreach (var thumbPosing in _thumbPosings)
         {
             thumbPosing.StartSqueeze();
         }
     }
-    
+
     public void StopSqueeze()
     {
+        _handAnimator.enabled = true;
         foreach (var thumbPosing in _thumbPosings)
         {
             thumbPosing.StopSqueeze();

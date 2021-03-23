@@ -159,7 +159,7 @@ public class PhysicsPoser : MonoBehaviour
         var handColliders = transform.GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>();
         foreach (var handCollider in handColliders)
         {
-            handCollider.enabled = false;
+            handCollider.isTrigger = true;
         }
     }
 
@@ -174,7 +174,7 @@ public class PhysicsPoser : MonoBehaviour
         var handColliders = transform.GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>();
         foreach (var handCollider in handColliders)
         {
-            handCollider.enabled = true;
+            handCollider.isTrigger = false;
         }
     }
 

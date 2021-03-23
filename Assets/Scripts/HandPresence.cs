@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
@@ -5,16 +6,23 @@ using UnityEngine.XR;
 public class HandPresence : MonoBehaviour
 {
     public InputDeviceCharacteristics deviceCharacteristics;
-    public GameObject handPrefab;
-
+    public bool isGripAnimEnabled = true;
+    
     private InputDevice _targetDevice;
     private GameObject _spawnedHandModel;
     private Animator _handAnimator;
 
+    private void Awake()
+    {
+        _spawnedHandModel = transform.GetChild(0).gameObject;
+        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
+        _spawnedHandModel.SetActive(false);
+    }
+
     private void Start()
     {
         TryInitializeHand();
-    } 
+    }
 
     private void TryInitializeHand()
     {
@@ -23,8 +31,7 @@ public class HandPresence : MonoBehaviour
 
         if (devices.Count <= 0) return;
         _targetDevice = devices[0];
-        _spawnedHandModel = Instantiate(handPrefab, transform);
-        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
+        _spawnedHandModel.SetActive(true);
     }
 
     private void Update()
@@ -49,7 +56,7 @@ public class HandPresence : MonoBehaviour
             _handAnimator.SetFloat("Trigger", 0);
         }
 
-        if (_targetDevice.TryGetFeatureValue(CommonUsages.grip, out var gripValue))
+        if (isGripAnimEnabled && _targetDevice.TryGetFeatureValue(CommonUsages.grip, out var gripValue))
         {
             _handAnimator.SetFloat("Grip", gripValue);
         }

@@ -10,7 +10,7 @@ public class ThumbPosing : MonoBehaviour
     public float squeezeSpeed = 10f;
 
     private List<Quaternion> _initialPhalanxTransforms = new List<Quaternion>();
-    private Transform _currentPhalanx;
+    private int _currentPhalanxInd;
     private Coroutine _squeezing;
 
     private void Awake()
@@ -18,7 +18,7 @@ public class ThumbPosing : MonoBehaviour
         UpdatePhalanges();
     }
 
-    public void UpdatePhalanges()
+    private void UpdatePhalanges()
     {
         phalanges.Clear();
         var childColliders = GetComponentsInChildren<Collider>();
@@ -30,7 +30,7 @@ public class ThumbPosing : MonoBehaviour
             childCollider.gameObject.AddComponent<CollisionNotificator>();
         }
 
-        _currentPhalanx = phalanges[0];
+        _currentPhalanxInd = 0;
     }
 
     public void StartSqueeze()
@@ -41,14 +41,29 @@ public class ThumbPosing : MonoBehaviour
     public void StopSqueeze()
     {
         StopCoroutine(_squeezing);
-        _currentPhalanx = phalanges[0];
+        _currentPhalanxInd = 0;
     }
 
     private IEnumerator Squeezing()
     {
         while (true)
         {
-            _currentPhalanx.Rotate(0, 0, -squeezeSpeed * Time.deltaTime);
+            var turnAngle = _initialPhalanxTransforms[_currentPhalanxInd] * Quaternion.Euler(0f, 0f, -70f);
+            phalanges[_currentPhalanxInd].localRotation = Quaternion.Lerp(phalanges[_currentPhalanxInd].localRotation, turnAngle,
+                squeezeSpeed * Time.deltaTime);
+
+            var difference = Quaternion.Angle(phalanges[_currentPhalanxInd].localRotation, turnAngle);
+            if (difference <= 0.5f)
+            {
+                SetNextPhalanx(_currentPhalanxInd);
+            }
+            // phalanges[_currentPhalanxInd].Rotate(0, 0, -squeezeSpeed * Time.deltaTime);
+
+            // if (phalanges[_currentPhalanxInd].localRotation.eulerAngles.z >=
+            //     _initialPhalanxTransforms[_currentPhalanxInd].eulerAngles.z - 70)
+            // {
+            //     SetNextPhalanx(_currentPhalanxInd + 1);
+            // }
 
             yield return null;
         }
@@ -68,13 +83,18 @@ public class ThumbPosing : MonoBehaviour
         if (!colliderGameObject.layer.Equals(6)) return;
 
         var collidedPhalanxInd = int.Parse(source.name.Substring(source.name.Length - 1, 1)) - 1;
-        if (collidedPhalanxInd == phalanges.Count - 1)
+        SetNextPhalanx(collidedPhalanxInd);
+    }
+
+    private void SetNextPhalanx(int newInd)
+    {
+        if (newInd == phalanges.Count - 1)
         {
             StopSqueeze();
         }
         else
         {
-            _currentPhalanx = phalanges[collidedPhalanxInd + 1];
+            _currentPhalanxInd = newInd + 1;
         }
     }
 }
