@@ -1,20 +1,50 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR;
+using UnityEngine.XR.Interaction.Toolkit;
 
-public class HandPresence : MonoBehaviour
+public class HandPresence : BaseHand
 {
     public InputDeviceCharacteristics deviceCharacteristics;
-    public GameObject handPrefab;
 
     private InputDevice _targetDevice;
     private GameObject _spawnedHandModel;
     private Animator _handAnimator;
+    private XRBaseInteractor _interactor;
+
+    private bool isGripActive = true;
+
+    private void OnEnable()
+    {
+        _interactor.onSelectEntered.AddListener(TryApplyObjectPose);
+        _interactor.onSelectExited.AddListener(TryApplyDefaultPose);
+        
+        _interactor.onHoverEntered.AddListener(DisableGrip);
+        _interactor.onHoverExited.AddListener(EnableGrip);
+    }
+
+    private void OnDisable()
+    {
+        _interactor.onSelectEntered.RemoveListener(TryApplyObjectPose);
+        _interactor.onSelectExited.RemoveListener(TryApplyDefaultPose);
+        
+        _interactor.onHoverEntered.RemoveListener(DisableGrip);
+        _interactor.onHoverExited.RemoveListener(EnableGrip);
+    }
+
+    protected override void Awake()
+    {
+        base.Awake();
+        _spawnedHandModel = transform.GetChild(0).gameObject;
+        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
+        _spawnedHandModel.SetActive(false);
+    }
 
     private void Start()
     {
         TryInitializeHand();
-    } 
+    }
 
     private void TryInitializeHand()
     {
@@ -23,8 +53,7 @@ public class HandPresence : MonoBehaviour
 
         if (devices.Count <= 0) return;
         _targetDevice = devices[0];
-        _spawnedHandModel = Instantiate(handPrefab, transform);
-        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
+        _spawnedHandModel.SetActive(true);
     }
 
     private void Update()
@@ -49,13 +78,60 @@ public class HandPresence : MonoBehaviour
             _handAnimator.SetFloat("Trigger", 0);
         }
 
-        if (_targetDevice.TryGetFeatureValue(CommonUsages.grip, out var gripValue))
+        if (isGripActive && _targetDevice.TryGetFeatureValue(CommonUsages.grip, out var gripValue))
         {
             _handAnimator.SetFloat("Grip", gripValue);
         }
         else
         {
             _handAnimator.SetFloat("Grip", 0);
+        }
+    }
+
+    private void TryApplyObjectPose(XRBaseInteractable interactable)
+    {
+        _handAnimator.enabled = false;
+        if (interactable.TryGetComponent(out PoseContainer poseContainer))
+        {
+            ApplyPose(poseContainer.pose);
+        }
+    }
+
+    private void TryApplyDefaultPose(XRBaseInteractable interactable)
+    {
+        if (interactable.TryGetComponent(out PoseContainer poseContainer))
+        {
+            ApplyDefaultPose();
+        }
+        _handAnimator.enabled = true;
+    }
+
+    private void EnableGrip(XRBaseInteractable interactable)
+    {
+        isGripActive = true;
+    }
+    
+    private void DisableGrip(XRBaseInteractable interactable)
+    {
+        isGripActive = false;
+    }
+
+    public override void ApplyOffset(Vector3 position, Quaternion rotation)
+    {
+        var finalPosition = position * -1f;
+        var finalRotation = Quaternion.Inverse(rotation);
+
+        finalPosition = finalPosition.RotatePointAroundPivot(Vector3.zero, finalRotation.eulerAngles);
+
+        _interactor.attachTransform.localPosition = finalPosition;
+        _interactor.attachTransform.localRotation = finalRotation;
+    }
+
+    private void OnValidate()
+    {
+        if (!_interactor)
+        {
+            _interactor = GetComponentInParent<XRBaseInteractor>();
         }
     }
 }
