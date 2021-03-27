@@ -27,6 +27,7 @@ public class PhysicsPoser : MonoBehaviour
     private Rigidbody _rigidbody;
     private XRBaseInteractor _interactor;
     private ActionBasedController _controller;
+    private Collider[] _handColliders;
 
     #endregion
 
@@ -42,6 +43,7 @@ public class PhysicsPoser : MonoBehaviour
         _rigidbody = GetComponent<Rigidbody>();
         _interactor = GetComponent<XRBaseInteractor>();
         _controller = GetComponent<ActionBasedController>();
+        _handColliders = GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>(true);
     }
 
     private void OnEnable()
@@ -156,8 +158,7 @@ public class PhysicsPoser : MonoBehaviour
 
     private void DisableHandColliders(XRBaseInteractable interactable)
     {
-        var handColliders = transform.GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>();
-        foreach (var handCollider in handColliders)
+        foreach (var handCollider in _handColliders)
         {
             handCollider.enabled = false;
         }
@@ -171,8 +172,7 @@ public class PhysicsPoser : MonoBehaviour
     private IEnumerator WaitForRange()
     {
         yield return new WaitWhile(WithinPhysicsRange);
-        var handColliders = transform.GetComponentInChildren<HandPresence>().GetComponentsInChildren<Collider>();
-        foreach (var handCollider in handColliders)
+        foreach (var handCollider in _handColliders)
         {
             handCollider.enabled = true;
         }

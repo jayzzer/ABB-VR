@@ -7,17 +7,23 @@ public class XRGrabInteractableFixed : XRGrabInteractable
 {
     [SerializeField] private bool _useOffset;
     [SerializeField] private bool _attachToHands;
-    
+    [SerializeField] private bool _attachToObj;
+
     private Vector3 _interactorPos = Vector3.zero;
     private Quaternion _interactorRot = Quaternion.identity;
-    
+    private Transform _hand;
+
     protected override void OnSelectEntered(XRBaseInteractor interactor)
     {
-        base.OnSelectEntered(interactor);
-
         if (_attachToHands)
         {
-            SetParentToXRRig();
+            SetParentToXRRig(interactor);
+        }
+
+        if (_attachToObj)
+        {
+            StoreHand(interactor);
+            SetHandToObj(interactor);
         }
 
         if (_useOffset)
@@ -25,23 +31,35 @@ public class XRGrabInteractableFixed : XRGrabInteractable
             StoreInteractor(interactor);
             MatchAttachmentPoints(interactor);
         }
+        
+        base.OnSelectEntered(interactor);
     }
 
     protected override void OnSelectExited(XRBaseInteractor interactor)
     {
-        base.OnSelectExited(interactor);
-
         if (_useOffset)
         {
             ResetAttachmentPoint(interactor);
             ClearInteractor();
         }
+
+        if (_attachToObj)
+        {
+            ReturnHandToParent(interactor);
+        }
+        
+        base.OnSelectExited(interactor);
     }
 
     private void StoreInteractor(XRBaseInteractor interactor)
     {
         _interactorPos = interactor.attachTransform.localPosition;
         _interactorRot = interactor.attachTransform.localRotation;
+    }
+
+    private void StoreHand(XRBaseInteractor interactor)
+    {
+        _hand = interactor.transform.GetComponentInChildren<HandPresence>().transform;
     }
 
     private void MatchAttachmentPoints(XRBaseInteractor interactor)
@@ -63,8 +81,20 @@ public class XRGrabInteractableFixed : XRGrabInteractable
         _interactorRot = Quaternion.identity;
     }
 
-    private void SetParentToXRRig()
+    private void SetParentToXRRig(XRBaseInteractor interactor)
     {
-        transform.SetParent(selectingInteractor.transform);
+        transform.SetParent(interactor.transform);
+    }
+
+    private void SetHandToObj(XRBaseInteractor interactor)
+    {
+        _hand.parent = transform;
+    }
+
+    private void ReturnHandToParent(XRBaseInteractor interactor)
+    {
+        _hand.parent = interactor.transform;
+        _hand.localPosition = Vector3.zero;
+        _hand.localRotation = Quaternion.identity;
     }
 }
