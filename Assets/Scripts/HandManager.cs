@@ -53,7 +53,10 @@ public class HandManager : MonoBehaviour
     {
         LeftHand.transform.parent = parentTransform;
         RightHand.transform.parent = parentTransform;
-
+        
+        LeftHand.transform.localPosition = pose.leftHandInfo.attachPosition;
+        RightHand.transform.localPosition = pose.rightHandInfo.attachPosition;
+        
         LeftHand.ApplyPose(pose);
         RightHand.ApplyPose(pose);
     }

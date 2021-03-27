@@ -48,6 +48,8 @@ public abstract class BaseHand : MonoBehaviour
     {
         var handInfo = pose.GetHandInfo(handType);
         ApplyFingerRotations(handInfo.fingerRotations);
+        
+        ApplyOffset(handInfo.attachPosition, handInfo.attachRotation);
     }
 
     public void ApplyFingerRotations(List<Quaternion> rotations)
