@@ -1,11 +1,5 @@
 {
   "dependencies": {
-    "com.sator-imaging.pose-editor": {
-      "version": "file:D:/LAB/vr_mtuci/unity/laboratory/Assets/SatorImaging/PoseEditor",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.unity.collab-proxy": {
       "version": "1.3.9",
       "depth": 0,
