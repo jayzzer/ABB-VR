@@ -6,6 +6,7 @@ public abstract class StateMachine : MonoBehaviour
 
     public void SetState(State newState)
     {
+        Debug.Log("changed State to " + newState.ToString());
         state = newState;
         StartCoroutine(state.Start());
     }

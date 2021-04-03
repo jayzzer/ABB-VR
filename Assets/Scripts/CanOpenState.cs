@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class CanOpenState : State
@@ -9,7 +10,11 @@ public class CanOpenState : State
 
     public override IEnumerator Start()
     {
-        doorStateSystem.doorHandle.GetComponent<Rigidbody>().isKinematic = false;
+        doorStateSystem.door.transform.localRotation = quaternion.identity;
+        doorStateSystem.door.GetComponent<Rigidbody>().isKinematic = true;
+
+        doorStateSystem.doorHandle.GetComponent<ConfigurableJoint>().highAngularXLimit =
+            new SoftJointLimit {limit = 15};
 
         yield break;
     }
@@ -17,6 +22,13 @@ public class CanOpenState : State
     public override IEnumerator LockDoor()
     {
         doorStateSystem.SetState(new ClosedState(doorStateSystem));
+
+        yield break;
+    }
+
+    public override IEnumerator OpenDoor()
+    {
+        doorStateSystem.SetState(new OpenState(doorStateSystem));
 
         yield break;
     }

@@ -31,16 +31,26 @@ public class DoorStateSystem : StateMachine
 
     private void Start()
     {
-        SetState(new CanOpenState(this));
+        SetState(new ClosedState(this));
     }
 
     private void OnDoorHandleReachedEnd()
     {
-        SetState(new OpenState(this));
+        StartCoroutine(state.OpenDoor());
     }
 
     private void OnDoorHandleUnreachedEnd()
     {
-        SetState(new CanOpenState(this));
+        StartCoroutine(state.CloseDoor());
+    }
+
+    public void OnDoorUnlocked()
+    {
+        StartCoroutine(state.UnlockDoor());
+    }
+    
+    public void OnDoorLocked()
+    {
+        StartCoroutine(state.LockDoor());
     }
 }

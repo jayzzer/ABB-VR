@@ -14,7 +14,7 @@ public class ClosedState : State
         doorStateSystem.door.GetComponent<Rigidbody>().isKinematic = true;
 
         // Также убираем возможность пользоваться ручкой на двери
-        doorStateSystem.doorHandle.GetComponent<Rigidbody>().isKinematic = true;
+        doorStateSystem.doorHandle.GetComponent<ConfigurableJoint>().highAngularXLimit = new SoftJointLimit {limit = 1};
 
         yield break;
     }

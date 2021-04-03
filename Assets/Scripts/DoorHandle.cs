@@ -45,7 +45,7 @@ public class DoorHandle : MonoBehaviour
             // Разрешаем поворот ручки вверх/вниз
             _joint.lowAngularXLimit = new SoftJointLimit {limit = 0};
             // Уменьшаем поворот ручки по вправо/влево
-            _joint.angularZLimit = new SoftJointLimit {limit = 5};
+            _joint.angularZLimit = new SoftJointLimit {limit = 2};
         }
 
         if (!_doorCanBeOpened && IsAchievedHorizontalMax())
@@ -67,7 +67,7 @@ public class DoorHandle : MonoBehaviour
 
     private bool IsAchievedRotationForHorizontal()
     {
-        return transform.localRotation.eulerAngles.z > 180 && transform.localRotation.eulerAngles.z <= 355;
+        return transform.localRotation.eulerAngles.z > 180 && transform.localRotation.eulerAngles.z <= 358;
     }
 
     private bool IsAchievedRotationForVertical()

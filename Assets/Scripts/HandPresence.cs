@@ -7,9 +7,9 @@ using UnityEngine.XR.Interaction.Toolkit;
 public class HandPresence : BaseHand
 {
     public InputDeviceCharacteristics deviceCharacteristics;
+    public GameObject spawnedHandModel;
 
     private InputDevice _targetDevice;
-    private GameObject _spawnedHandModel;
     private Animator _handAnimator;
     private XRBaseInteractor _interactor;
 
@@ -36,9 +36,9 @@ public class HandPresence : BaseHand
     protected override void Awake()
     {
         base.Awake();
-        _spawnedHandModel = transform.GetChild(0).gameObject;
-        _handAnimator = _spawnedHandModel.GetComponent<Animator>();
-        _spawnedHandModel.SetActive(false);
+        spawnedHandModel = transform.GetChild(0).gameObject;
+        _handAnimator = spawnedHandModel.GetComponent<Animator>();
+        spawnedHandModel.SetActive(false);
     }
 
     private void Start()
@@ -53,7 +53,7 @@ public class HandPresence : BaseHand
 
         if (devices.Count <= 0) return;
         _targetDevice = devices[0];
-        _spawnedHandModel.SetActive(true);
+        spawnedHandModel.SetActive(true);
     }
 
     private void Update()

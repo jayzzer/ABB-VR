@@ -5,25 +5,64 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 public class XRGrabInteractableFixed : XRGrabInteractable
 {
+    #region Settings
+
+    [SerializeField] private bool _remainParent;
     [SerializeField] private bool _useOffset;
     [SerializeField] private bool _attachToHands;
     [SerializeField] private bool _attachToObj;
 
+    [SerializeField] private bool _hideHandOnGrab;
+
+    #endregion
+
     private Vector3 _interactorPos = Vector3.zero;
     private Quaternion _interactorRot = Quaternion.identity;
-    private Transform _hand;
+
+    private HandPresence _handPresence;
+    private Transform _handModel;
+
+    private Transform _originalHandParent;
+    private Vector3 _originalHandPosition;
+    private Quaternion _originalHandRotation;
+
+    protected override void OnSelectEntering(XRBaseInteractor interactor)
+    {
+        if (_remainParent)
+        {
+            _originalHandParent = transform.parent;
+        }
+
+        base.OnSelectEntering(interactor);
+
+        if (_remainParent)
+        {
+            transform.parent = _originalHandParent;
+        }
+    }
 
     protected override void OnSelectEntered(XRBaseInteractor interactor)
     {
+        base.OnSelectEntered(interactor);
+
         if (_attachToHands)
         {
             SetParentToXRRig(interactor);
         }
 
-        if (_attachToObj)
+        if (_attachToObj || _hideHandOnGrab)
         {
             StoreHand(interactor);
+        }
+
+        if (_attachToObj)
+        {
             SetHandToObj(interactor);
+        }
+
+        if (_hideHandOnGrab)
+        {
+            _handModel.gameObject.SetActive(false);
         }
 
         if (_useOffset)
@@ -31,8 +70,6 @@ public class XRGrabInteractableFixed : XRGrabInteractable
             StoreInteractor(interactor);
             MatchAttachmentPoints(interactor);
         }
-        
-        base.OnSelectEntered(interactor);
     }
 
     protected override void OnSelectExited(XRBaseInteractor interactor)
@@ -47,7 +84,12 @@ public class XRGrabInteractableFixed : XRGrabInteractable
         {
             ReturnHandToParent(interactor);
         }
-        
+
+        if (_hideHandOnGrab)
+        {
+            _handModel.gameObject.SetActive(true);
+        }
+
         base.OnSelectExited(interactor);
     }
 
@@ -59,7 +101,8 @@ public class XRGrabInteractableFixed : XRGrabInteractable
 
     private void StoreHand(XRBaseInteractor interactor)
     {
-        _hand = interactor.transform.GetComponentInChildren<HandPresence>().transform;
+        _handPresence = interactor.transform.GetComponentInChildren<HandPresence>();
+        _handModel = _handPresence.spawnedHandModel.transform;
     }
 
     private void MatchAttachmentPoints(XRBaseInteractor interactor)
@@ -88,13 +131,23 @@ public class XRGrabInteractableFixed : XRGrabInteractable
 
     private void SetHandToObj(XRBaseInteractor interactor)
     {
-        _hand.parent = transform;
+        _originalHandPosition = _handModel.localPosition;
+        _originalHandRotation = _handModel.localRotation;
+
+        _handModel.parent = transform;
+
+        if (TryGetComponent(out PoseContainer poseContainer))
+        {
+            var handInfo = poseContainer.pose.GetHandInfo(_handPresence.HandType);
+            _handModel.localPosition = handInfo.attachPosition;
+            _handModel.localRotation = handInfo.attachRotation;
+        }
     }
 
     private void ReturnHandToParent(XRBaseInteractor interactor)
     {
-        _hand.parent = interactor.transform;
-        _hand.localPosition = Vector3.zero;
-        _hand.localRotation = Quaternion.identity;
+        _handModel.parent = interactor.transform;
+        _handModel.localPosition = _originalHandPosition;
+        _handModel.localRotation = _originalHandRotation;
     }
 }
