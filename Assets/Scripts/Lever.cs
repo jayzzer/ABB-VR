@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.XR.Interaction.Toolkit;
 
 [RequireComponent(typeof(HingeJoint))]
 public class Lever : MonoBehaviour
@@ -13,6 +14,10 @@ public class Lever : MonoBehaviour
     [SerializeField] private bool useSwitchingAngle;
     [SerializeField] private float switchingAngle = 10f;
     [SerializeField] private float switchingSpeed = 100f;
+
+    [SerializeField] private bool useSpring;
+    [SerializeField] private float springTargetAngle = 0f;
+    [SerializeField] private float springSpeed = 100f;
 
     #endregion
 
@@ -26,6 +31,8 @@ public class Lever : MonoBehaviour
     #region References
 
     private HingeJoint _joint;
+    private Rigidbody _rigidbody;
+    private XRGrabInteractable _interactable;
 
     #endregion
 
@@ -36,6 +43,28 @@ public class Lever : MonoBehaviour
     private void Awake()
     {
         _joint = GetComponent<HingeJoint>();
+        _rigidbody = GetComponent<Rigidbody>();
+
+        if (useSpring)
+        {
+            _interactable = GetComponent<XRGrabInteractable>();
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (useSpring)
+        {
+            _interactable.onSelectExited.AddListener(ReturnToStartRotation);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (useSpring)
+        {
+            _interactable.onSelectExited.RemoveListener(ReturnToStartRotation);
+        }
     }
 
     private void Update()
@@ -53,20 +82,23 @@ public class Lever : MonoBehaviour
         if (_currentCoroutine == null && _joint.angle < _joint.limits.max - switchingAngle &&
             _joint.angle > _joint.limits.min + switchingAngle)
         {
-            _currentCoroutine = StartCoroutine(SmoothTurn(_wasTurnedOn
+            var targetRotation = _wasTurnedOn
                 ? Quaternion.Euler(_joint.axis * _joint.limits.min)
-                : Quaternion.Euler(_joint.axis * _joint.limits.max)));
+                : Quaternion.Euler(_joint.axis * _joint.limits.max);
+            _currentCoroutine = StartCoroutine(SmoothTurn(targetRotation, switchingSpeed));
         }
     }
 
-    private IEnumerator SmoothTurn(Quaternion target)
+    private IEnumerator SmoothTurn(Quaternion target, float speed, Action endMethod = null)
     {
         while (Quaternion.Angle(transform.localRotation, target) >= 0.1f)
         {
             transform.localRotation =
-                Quaternion.RotateTowards(transform.localRotation, target, switchingSpeed * Time.deltaTime);
+                Quaternion.RotateTowards(transform.localRotation, target, speed * Time.deltaTime);
             yield return null;
         }
+
+        endMethod?.Invoke();
 
         _currentCoroutine = null;
     }
@@ -78,8 +110,7 @@ public class Lever : MonoBehaviour
             if (IsAchievedMax())
             {
                 onTurnedOn.Invoke();
-                _wasTurnedOn = true;
-                _isTurned = true;
+                _wasTurnedOn = _isTurned = true;
             }
             else if (IsAchievedMin())
             {
@@ -102,5 +133,21 @@ public class Lever : MonoBehaviour
     private bool IsAchievedMin()
     {
         return _joint.angle <= _joint.limits.min + angleThreshold;
+    }
+
+    private void ReturnToStartRotation(XRBaseInteractor interactor)
+    {
+        _currentCoroutine = StartCoroutine(
+            SmoothTurn(
+                Quaternion.Euler(_joint.axis * springTargetAngle),
+                springSpeed,
+                FreezeObject
+            )
+        );
+    }
+
+    private void FreezeObject()
+    {
+        _rigidbody.isKinematic = true;
     }
 }
