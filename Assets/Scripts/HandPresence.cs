@@ -13,13 +13,13 @@ public class HandPresence : BaseHand
     private Animator _handAnimator;
     private XRBaseInteractor _interactor;
 
-    private bool isGripActive = true;
+    private bool _isGripActive = true;
 
     private void OnEnable()
     {
         _interactor.onSelectEntered.AddListener(TryApplyObjectPose);
         _interactor.onSelectExited.AddListener(TryApplyDefaultPose);
-        
+
         _interactor.onHoverEntered.AddListener(DisableGrip);
         _interactor.onHoverExited.AddListener(EnableGrip);
     }
@@ -28,7 +28,7 @@ public class HandPresence : BaseHand
     {
         _interactor.onSelectEntered.RemoveListener(TryApplyObjectPose);
         _interactor.onSelectExited.RemoveListener(TryApplyDefaultPose);
-        
+
         _interactor.onHoverEntered.RemoveListener(DisableGrip);
         _interactor.onHoverExited.RemoveListener(EnableGrip);
     }
@@ -78,7 +78,7 @@ public class HandPresence : BaseHand
             _handAnimator.SetFloat("Trigger", 0);
         }
 
-        if (isGripActive && _targetDevice.TryGetFeatureValue(CommonUsages.grip, out var gripValue))
+        if (_isGripActive && _targetDevice.TryGetFeatureValue(CommonUsages.grip, out var gripValue))
         {
             _handAnimator.SetFloat("Grip", gripValue);
         }
@@ -103,17 +103,18 @@ public class HandPresence : BaseHand
         {
             ApplyDefaultPose();
         }
+
         _handAnimator.enabled = true;
     }
 
     private void EnableGrip(XRBaseInteractable interactable)
     {
-        isGripActive = true;
+        _isGripActive = true;
     }
-    
+
     private void DisableGrip(XRBaseInteractable interactable)
     {
-        isGripActive = false;
+        _isGripActive = false;
     }
 
     public override void ApplyOffset(Vector3 position, Quaternion rotation)

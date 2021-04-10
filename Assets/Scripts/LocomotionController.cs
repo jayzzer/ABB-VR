@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,17 +7,40 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 public class LocomotionController : MonoBehaviour
 {
-    [SerializeField] private ActionBasedController _controller;
-    [SerializeField] private InputActionProperty _enableAction;
-    
-    private void Update()
+    [SerializeField] private GameObject controller;
+    [SerializeField] private InputActionProperty enableAction;
+
+    private void Awake()
     {
-        if (!_controller) return;
-        _controller.gameObject.SetActive(IsPressed(_enableAction.action));
+        controller.SetActive(false);
     }
 
-    private static bool IsPressed(InputAction action)
+    private void OnEnable()
     {
-        return action.triggered || action.phase == InputActionPhase.Performed;
+        enableAction.action.performed += EnableLocomotionController;
+        enableAction.action.canceled += OnActionCanceled;
+    }
+
+    private void OnDisable()
+    {
+        enableAction.action.performed -= EnableLocomotionController;
+        enableAction.action.canceled -= OnActionCanceled;
+    }
+
+    private void EnableLocomotionController(InputAction.CallbackContext context)
+    {
+        controller.SetActive(true);
+    }
+
+    private void OnActionCanceled(InputAction.CallbackContext context)
+    {
+        StartCoroutine(DisableLocomotionController());
+    }
+
+
+    private IEnumerator DisableLocomotionController()
+    {
+        yield return new WaitForEndOfFrame();
+        controller.SetActive(false);
     }
 }
