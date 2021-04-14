@@ -48,6 +48,7 @@ public class Lever : MonoBehaviour
         if (useSpring)
         {
             _interactable = GetComponent<XRGrabInteractable>();
+            FreezeObject();
         }
     }
 
@@ -55,6 +56,7 @@ public class Lever : MonoBehaviour
     {
         if (useSpring)
         {
+            _interactable.onSelectEntered.AddListener(UnfreezeObject);
             _interactable.onSelectExited.AddListener(ReturnToStartRotation);
         }
     }
@@ -63,6 +65,7 @@ public class Lever : MonoBehaviour
     {
         if (useSpring)
         {
+            _interactable.onSelectEntered.RemoveListener(UnfreezeObject);
             _interactable.onSelectExited.RemoveListener(ReturnToStartRotation);
         }
     }
@@ -145,9 +148,14 @@ public class Lever : MonoBehaviour
             )
         );
     }
-
+    
     private void FreezeObject()
     {
-        _rigidbody.isKinematic = true;
+        _rigidbody.freezeRotation = true;
+    }
+    
+    private void UnfreezeObject(XRBaseInteractor interactor)
+    {
+        _rigidbody.freezeRotation = false;
     }
 }
