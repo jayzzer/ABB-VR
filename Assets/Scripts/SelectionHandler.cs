@@ -24,7 +24,7 @@ public class SelectionHandler : MonoBehaviour
     private XRBaseInteractable GetInteractable()
     {
         XRBaseInteractable newInteractable = null;
-        GameObject selectedObject;
+        GameObject selectedObject = null;
 
         #if UNITY_EDITOR
         selectedObject = Selection.activeGameObject;
@@ -50,7 +50,7 @@ public class SelectionHandler : MonoBehaviour
 
     public GameObject SetObjectPose(Pose pose)
     {
-        GameObject selectedObject;
+        GameObject selectedObject = null;
 
         #if UNITY_EDITOR
         selectedObject = Selection.activeGameObject;

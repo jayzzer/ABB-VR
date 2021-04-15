@@ -7,13 +7,18 @@ public class SelectorController : MonoBehaviour
 {
     #region References
 
-    [SerializeField] private XRBaseInteractor interactor;
+    [SerializeField] private XRDirectInteractor directInteractor;
+    [SerializeField] private XRRayInteractor rayInteractor;
     [SerializeField] private GameObject selectorContainer;
     [SerializeField] private InputActionProperty enableAction;
+
+    [SerializeField] private InputActionProperty rotateRightAction;
+    [SerializeField] private InputActionProperty rotateLeftAction;
 
     #endregion
 
     private bool _isHovering;
+    private SelectInteractable _selectedObject;
 
     private void Awake()
     {
@@ -22,24 +27,38 @@ public class SelectorController : MonoBehaviour
 
     private void OnEnable()
     {
-        interactor.onHoverEntered.AddListener(OnHoverEntered);
-        interactor.onHoverExited.AddListener(OnHoverExited);
+        directInteractor.onHoverEntered.AddListener(OnHoverEntered);
+        directInteractor.onHoverExited.AddListener(OnHoverExited);
 
-        interactor.onSelectEntered.AddListener(OnSelectEntered);
+        directInteractor.onSelectEntered.AddListener(OnSelectEntered);
+        
+        rayInteractor.onSelectEntered.AddListener(OnRaySelectEntered);
 
-        enableAction.action.performed += OnActionPerformed;
-        enableAction.action.canceled += OnActionCanceled;
+        enableAction.action.performed += OnEnableActionPerformed;
+        enableAction.action.canceled += OnEnableActionCanceled;
+
+        rotateLeftAction.action.started += OnRotateLeftActionStarted;
+        rotateLeftAction.action.canceled += OnRotateActionCanceled;
+        rotateRightAction.action.started += OnRotateRightActionStarted;
+        rotateRightAction.action.canceled += OnRotateActionCanceled;
     }
 
     private void OnDisable()
     {
-        interactor.onHoverEntered.RemoveListener(OnHoverEntered);
-        interactor.onHoverExited.RemoveListener(OnHoverExited);
+        directInteractor.onHoverEntered.RemoveListener(OnHoverEntered);
+        directInteractor.onHoverExited.RemoveListener(OnHoverExited);
 
-        interactor.onSelectEntered.RemoveListener(OnSelectEntered);
+        directInteractor.onSelectEntered.RemoveListener(OnSelectEntered);
+        
+        rayInteractor.onSelectEntered.RemoveListener(OnRaySelectEntered);
 
-        enableAction.action.performed -= OnActionPerformed;
-        enableAction.action.canceled -= OnActionCanceled;
+        enableAction.action.performed -= OnEnableActionPerformed;
+        enableAction.action.canceled -= OnEnableActionCanceled;
+        
+        rotateLeftAction.action.started -= OnRotateLeftActionStarted;
+        rotateLeftAction.action.canceled -= OnRotateActionCanceled;
+        rotateRightAction.action.started -= OnRotateRightActionStarted;
+        rotateRightAction.action.canceled -= OnRotateActionCanceled;
     }
 
     private void OnHoverEntered(XRBaseInteractable interactable)
@@ -52,19 +71,50 @@ public class SelectorController : MonoBehaviour
         _isHovering = false;
     }
 
-    private void OnActionPerformed(InputAction.CallbackContext context)
+    private void OnEnableActionPerformed(InputAction.CallbackContext context)
     {
         selectorContainer.SetActive(!_isHovering);
     }
 
-    private void OnActionCanceled(InputAction.CallbackContext context)
+    private void OnEnableActionCanceled(InputAction.CallbackContext context)
     {
         DisableSelector();
+    }
+
+    private void OnRotateLeftActionStarted(InputAction.CallbackContext context)
+    {
+        if (!_selectedObject) return;
+        if (!_selectedObject.Rotate(SelectInteractable.Direction.Right)) _selectedObject = null;
+    }
+    
+    private void OnRotateRightActionStarted(InputAction.CallbackContext context)
+    {
+        if (!_selectedObject) return;
+        if (!_selectedObject.Rotate(SelectInteractable.Direction.Left)) _selectedObject = null;
+    }
+
+    private void OnRotateActionCanceled(InputAction.CallbackContext context)
+    {
+        if (!_selectedObject) return;
+        _selectedObject.StopRotation();
     }
 
     private void OnSelectEntered(XRBaseInteractable interactable)
     {
         DisableSelector();
+    }
+
+    private void OnRaySelectEntered(XRBaseInteractable interactable)
+    {
+        if (_selectedObject && _selectedObject.name == interactable.name)
+        {
+            _selectedObject = null;
+            return;
+        }
+
+        if (!interactable.TryGetComponent(out SelectInteractable selectInteractable)) return;
+        if (_selectedObject) _selectedObject.Deactivate();
+        _selectedObject = selectInteractable;
     }
 
     private void DisableSelector()

@@ -22,13 +22,20 @@ public class SelectInteractable : XRBaseInteractable
 
     #endregion
 
+    public enum Direction
+    {
+        Left,
+        Right
+    }
+
     private Vector3 _initialPosition;
     private Quaternion _initialRotation;
     private bool _initialKinematic;
 
     private bool _isActivated;
 
-    private Tween _moveTween;
+    private Sequence _moveTween;
+    private Coroutine _rotationCoroutine;
 
     protected override void Awake()
     {
@@ -52,7 +59,6 @@ public class SelectInteractable : XRBaseInteractable
 
     private void StartMovement()
     {
-        _moveTween?.Kill();
         if (_isActivated)
         {
             Deactivate();
@@ -65,20 +71,57 @@ public class SelectInteractable : XRBaseInteractable
 
     private void Activate()
     {
+        _moveTween?.Kill();
+
         _rigidbody.isKinematic = true;
         var target = _initialPosition + flyOutDirection;
-        _moveTween = transform.DOLocalMove(target, flyOutDuration);
+        _moveTween = DOTween.Sequence()
+            .Append(transform.DOLocalMove(target, flyOutDuration));
 
         _isActivated = true;
     }
 
-    private void Deactivate()
+    public void Deactivate()
     {
-        _moveTween = transform
-            .DOLocalMove(_initialPosition, flyOutDuration)
+        _moveTween?.Kill();
+
+        StopRotation();
+
+        _moveTween = DOTween.Sequence()
+            .Append(transform.DOLocalMove(_initialPosition, flyOutDuration))
+            .Join(transform.DOLocalRotateQuaternion(_initialRotation, flyOutDuration))
             .OnComplete(ReturnInitialProperties);
 
         _isActivated = false;
+    }
+
+    public bool Rotate(Direction direction)
+    {
+        if (!_isActivated) return false;
+        if (_rotationCoroutine != null) return true;
+
+        _rotationCoroutine = StartCoroutine(Rotation(direction));
+
+        return true;
+    }
+
+    public void StopRotation()
+    {
+        if (_rotationCoroutine == null) return;
+
+        StopCoroutine(_rotationCoroutine);
+        _rotationCoroutine = null;
+    }
+
+    private IEnumerator Rotation(Direction direction)
+    {
+        var angle = direction == Direction.Left ? -rotationSpeed : rotationSpeed;
+
+        while (true)
+        {
+            transform.Rotate(Vector3.up, angle * Time.deltaTime, Space.World);
+            yield return null;
+        }
     }
 
     private void ReturnInitialProperties()

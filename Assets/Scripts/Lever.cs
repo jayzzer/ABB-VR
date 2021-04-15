@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.XR.Interaction.Toolkit;
@@ -13,11 +14,11 @@ public class Lever : MonoBehaviour
 
     [SerializeField] private bool useSwitchingAngle;
     [SerializeField] private float switchingAngle = 10f;
-    [SerializeField] private float switchingSpeed = 100f;
+    [SerializeField] private float switchingDuration = 1f;
 
     [SerializeField] private bool useSpring;
-    [SerializeField] private float springTargetAngle = 0f;
-    [SerializeField] private float springSpeed = 100f;
+    [SerializeField] private float springTargetAngle;
+    [SerializeField] private float springReturnDuration = 1f;
 
     #endregion
 
@@ -38,7 +39,7 @@ public class Lever : MonoBehaviour
 
     private bool _isTurned;
     private bool _wasTurnedOn;
-    private Coroutine _currentCoroutine;
+    private Tween _currentTween;
 
     private void Awake()
     {
@@ -82,28 +83,15 @@ public class Lever : MonoBehaviour
 
     private void CheckSwitchingAngle()
     {
-        if (_currentCoroutine == null && _joint.angle < _joint.limits.max - switchingAngle &&
-            _joint.angle > _joint.limits.min + switchingAngle)
-        {
-            var targetRotation = _wasTurnedOn
-                ? Quaternion.Euler(_joint.axis * _joint.limits.min)
-                : Quaternion.Euler(_joint.axis * _joint.limits.max);
-            _currentCoroutine = StartCoroutine(SmoothTurn(targetRotation, switchingSpeed));
-        }
-    }
-
-    private IEnumerator SmoothTurn(Quaternion target, float speed, Action endMethod = null)
-    {
-        while (Quaternion.Angle(transform.localRotation, target) >= 0.1f)
-        {
-            transform.localRotation =
-                Quaternion.RotateTowards(transform.localRotation, target, speed * Time.deltaTime);
-            yield return null;
-        }
-
-        endMethod?.Invoke();
-
-        _currentCoroutine = null;
+        if (_currentTween != null || !(_joint.angle < _joint.limits.max - switchingAngle) ||
+            !(_joint.angle > _joint.limits.min + switchingAngle)) return;
+        var targetRotation = _wasTurnedOn
+            ? Quaternion.Euler(_joint.axis * _joint.limits.min)
+            : Quaternion.Euler(_joint.axis * _joint.limits.max);
+        _currentTween = transform
+            .DOLocalRotateQuaternion(targetRotation, switchingDuration)
+            .SetEase(Ease.Linear)
+            .OnComplete(() => _currentTween = null);
     }
 
     private void CheckLimits()
@@ -140,20 +128,21 @@ public class Lever : MonoBehaviour
 
     private void ReturnToStartRotation(XRBaseInteractor interactor)
     {
-        _currentCoroutine = StartCoroutine(
-            SmoothTurn(
-                Quaternion.Euler(_joint.axis * springTargetAngle),
-                springSpeed,
-                FreezeObject
-            )
-        );
+        _currentTween = transform
+            .DOLocalRotate(_joint.axis * springTargetAngle, springReturnDuration)
+            .SetEase(Ease.Linear)
+            .OnComplete(() =>
+            {
+                FreezeObject();
+                _currentTween = null;
+            });
     }
-    
+
     private void FreezeObject()
     {
         _rigidbody.freezeRotation = true;
     }
-    
+
     private void UnfreezeObject(XRBaseInteractor interactor)
     {
         _rigidbody.freezeRotation = false;
