@@ -15,6 +15,16 @@ public class HandPresence : BaseHand
 
     private bool _isGripActive = true;
 
+    protected override void Awake()
+    {
+        base.Awake();
+
+        _interactor = GetComponentInParent<XRBaseInteractor>();
+        spawnedHandModel = transform.GetChild(0).gameObject;
+        _handAnimator = spawnedHandModel.GetComponent<Animator>();
+        spawnedHandModel.SetActive(false);
+    }
+
     private void OnEnable()
     {
         _interactor.onSelectEntered.AddListener(TryApplyObjectPose);
@@ -31,14 +41,6 @@ public class HandPresence : BaseHand
 
         _interactor.onHoverEntered.RemoveListener(DisableGrip);
         _interactor.onHoverExited.RemoveListener(EnableGrip);
-    }
-
-    protected override void Awake()
-    {
-        base.Awake();
-        spawnedHandModel = transform.GetChild(0).gameObject;
-        _handAnimator = spawnedHandModel.GetComponent<Animator>();
-        spawnedHandModel.SetActive(false);
     }
 
     private void Start()
@@ -126,13 +128,5 @@ public class HandPresence : BaseHand
 
         _interactor.attachTransform.localPosition = finalPosition;
         _interactor.attachTransform.localRotation = finalRotation;
-    }
-
-    private void OnValidate()
-    {
-        if (!_interactor)
-        {
-            _interactor = GetComponentInParent<XRBaseInteractor>();
-        }
     }
 }
