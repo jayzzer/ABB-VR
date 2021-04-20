@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc9d77d7579745d0912d7c09f423a6fa, type: 3}
-  m_Name: NewPoseData 2
+  m_Name: HandleMainPose
   m_EditorClassIdentifier: 
   leftHandInfo:
     attachPosition: {x: -0.0117, y: -0.031, z: 0.0251}

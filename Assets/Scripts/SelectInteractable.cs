@@ -18,6 +18,7 @@ public class SelectInteractable : XRBaseInteractable
     #region References
 
     private Rigidbody _rigidbody;
+    private Collider[] _colliders;
 
     #endregion
 
@@ -30,6 +31,7 @@ public class SelectInteractable : XRBaseInteractable
     private Vector3 _initialPosition;
     private Quaternion _initialRotation;
     private bool _initialKinematic;
+    private bool _initialTrigger;
 
     private bool _isActivated;
 
@@ -41,10 +43,12 @@ public class SelectInteractable : XRBaseInteractable
         base.Awake();
 
         _rigidbody = GetComponent<Rigidbody>();
+        _colliders = GetComponents<Collider>();
 
         _initialPosition = transform.localPosition;
         _initialRotation = transform.localRotation;
         _initialKinematic = _rigidbody.isKinematic;
+        _initialTrigger = _colliders[0].isTrigger;
     }
 
     protected override void OnSelectEntered(XRBaseInteractor interactor)
@@ -73,6 +77,8 @@ public class SelectInteractable : XRBaseInteractable
         _moveTween?.Kill();
 
         _rigidbody.isKinematic = true;
+        SetCollidersTrigger(true);
+
         var target = _initialPosition + flyOutDirection;
         _moveTween = DOTween.Sequence()
             .Append(transform.DOLocalMove(target, flyOutDuration));
@@ -123,8 +129,17 @@ public class SelectInteractable : XRBaseInteractable
         }
     }
 
+    private void SetCollidersTrigger(bool triggerValue)
+    {
+        foreach (var colliderComp in _colliders)
+        {
+            colliderComp.isTrigger = triggerValue;
+        }
+    }
+
     private void ReturnInitialProperties()
     {
         _rigidbody.isKinematic = _initialKinematic;
+        SetCollidersTrigger(_initialTrigger);
     }
 }
